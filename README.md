@@ -24,12 +24,10 @@ Install the required packages by running the following command in your terminal:
     Bash
     python -m pip install yfinance numpy pandas
 
-
 📈 Usage
 
 Simply execute the script in your terminal or IDE:
-Bash
 
-python your_script_name.py
+    python your_script_name.py
 
 The console will output the total portfolio value, the downloaded data status, the calculated 1-day VaR and CVaR, and the results of the validity checks.
