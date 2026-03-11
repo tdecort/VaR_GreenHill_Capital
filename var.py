@@ -101,4 +101,66 @@ print(f"Confidence level    : {confidence_level}%")
 print("-" * 50)
 print(f"VaR ({confidence_level}%)  : {var_pct * 100:>7.2f}%  or  {var_value:>10,.2f} €")
 print(f"CVaR ({confidence_level}%) : {cvar_pct * 100:>7.2f}%  or  {cvar_value:>10,.2f} €")
+
+print("="*50)
+
+# =============================================================================
+# 9. VÉRIFICATION DES CONDITIONS DE VALIDITÉ DE LA VaR
+# =============================================================================
+
+print("\n" + "="*50)
+print(" VÉRIFICATION DES CONDITIONS DE LA VaR")
+print("="*50)
+
+# --- Condition 1 : Vérification de la Sous-additivité (Cohérence) ---
+# Formule du cours : Q(V1) + Q(V2) >= Q(V1+V2)
+# On calcule la VaR de chaque actif individuellement pour les sommer.
+
+indiv_var_values = []
+for ticker in tickers_valides:
+    if ticker == "CASH":
+        continue
+    # On calcule la VaR de l'actif i
+    tick_var_pct = np.percentile(returns[ticker].dropna(), alpha)
+    tick_var_value = tick_var_pct * portfolio_values[ticker]
+    indiv_var_values.append(tick_var_value)
+
+# Somme des VaR individuelles (en valeur absolue pour représenter la perte)
+sum_indiv_vars_loss = sum(abs(v) for v in indiv_var_values)
+port_var_loss = abs(var_value)
+
+print("1. Propriété de Sous-additivité (Cohérence) :")
+print(f"   VaR globale du portefeuille    : {port_var_loss:>10,.2f} €")
+print(f"   Somme des VaR individuelles    : {sum_indiv_vars_loss:>10,.2f} €")
+
+if port_var_loss <= sum_indiv_vars_loss:
+    print("   -> CONDITION VALIDÉE : La VaR de ce portefeuille est sous-additive (bénéfice de diversification).")
+else:
+    print("   -> CONDITION NON VALIDÉE : La VaR n'est pas sous-additive ici (violation de la cohérence).")
+
+# --- Condition 2 : Backtesting de base (Taux d'échec / Failure rate) ---
+# Formule du cours : m / n doit converger vers (1 - c)
+# Note : Pour un vrai backtest, il faudrait idéalement le faire sur des données hors-échantillon (out-of-sample).
+# Ici, on le fait in-sample pour vérifier la consistance de la distribution historique.
+
+n_obs = len(portfolio_returns)
+# Un dépassement (breach) correspond à une perte pire que la VaR
+breaches = portfolio_returns[portfolio_returns < var_pct]
+m_breaches = len(breaches)
+failure_rate = m_breaches / n_obs
+expected_failure_rate = alpha / 100
+
+print("\n2. Backtesting (Taux d'échec - m/n) :")
+print(f"   Nombre d'observations (n)      : {n_obs}")
+print(f"   Nombre de dépassements (m)     : {m_breaches}")
+print(f"   Dépassements attendus          : {n_obs * expected_failure_rate:.1f}")
+print(f"   Taux d'échec observé (m/n)     : {failure_rate * 100:.2f}%")
+print(f"   Taux d'échec cible (1 - c)     : {alpha:.2f}%")
+
+# Tolérance arbitraire de 20% autour de la cible pour l'affichage (peut être ajustée)
+if abs(failure_rate - expected_failure_rate) < (expected_failure_rate * 0.2):
+    print("   -> CONDITION VALIDÉE : Le taux d'échec est très proche de la probabilité cible.")
+else:
+    print("   -> À SURVEILLER : Le taux d'échec s'éloigne de la cible (typique en simulation historique in-sample).")
+
 print("="*50)
