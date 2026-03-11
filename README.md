@@ -1,6 +1,8 @@
 # VaR_GreenHill_Capital
 
 A Python script to calculate the 1-day historical Value at Risk (VaR) and Conditional Value at Risk (CVaR / Expected Shortfall) for an investment club's multi-asset portfolio.
+
+
 🚀 Features
 
     Historical VaR & CVaR Calculation: Computes the 1-day risk metrics based on historical price data fetched via Yahoo Finance.
